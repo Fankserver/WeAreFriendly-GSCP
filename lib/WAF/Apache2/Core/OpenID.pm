@@ -2,7 +2,7 @@ package WAF::Apache2::Core::OpenID;
 use strict;
 use warnings;
 
-use Apache2::Const -compile => qw(DECLINED REDIRECT);
+use Apache2::Const -compile => qw(DECLINED REDIRECT OK);
 use Apache2::Request;
 use Apache2::RequestRec;
 use APR::Table;
@@ -11,9 +11,7 @@ use LWP::UserAgent;
 
 sub handler {
 	my $r = shift;
-	
-	#$ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = 0;
-	
+
 	my $OpenID = new Net::OpenID::Consumer(
 		ua					=> LWP::UserAgent->new()
 		,cache				=> Cache::File->new(cache_root => '/tmp/openid')
@@ -25,21 +23,21 @@ sub handler {
 		#]
 		,args				=> Apache2::Request->new($r)
 	);
-	
+
 	if ($r->uri() =~ m~/steam/login~) {
 		my $claimed_identity = $OpenID->claimed_identity('http://steamcommunity.com/openid');
 		unless ($claimed_identity) {
 			die "not actually an openid? ".$OpenID->err;
 		}
-		
+
 		my $check_url = $claimed_identity->check_url(
 			return_to		=> "http://gscp.waf.fankservercdn.com/steam/verify",
 			trust_root		=> "http://gscp.waf.fankservercdn.com/",
 			delayed_return	=> 1
 		);
-		
+
 		$r->headers_out->set(Location => $check_url);
-		
+
 		return Apache2::Const::REDIRECT;
 	}
 	elsif ($r->uri() =~ m~/steam/verify~) {
@@ -68,10 +66,12 @@ sub handler {
 				die("Error validating identity: $errcode: $errcode");
 			},
 		);
+
+		return Apache2::Const::OK;
 	}
-	
+
 	#$r->pnotes(OpenID => $OpenID);
-	
+
 	return Apache2::Const::DECLINED;
 }
 
