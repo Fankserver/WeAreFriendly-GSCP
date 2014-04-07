@@ -1,0 +1,44 @@
+<%args>
+$SteamId		=> $m->request_args->{SteamId}
+$BattlEyeGUID	=> $m->request_args->{BattlEyeGUID}
+$ServerId		=> $m->request_args->{ServerId}
+$Ban			=> $m->request_args->{Ban}
+</%args>
+<%init>
+# Add Ban
+if ($Ban) {
+	
+}
+
+if ($ServerId > 0) {
+	my $sth = $r->pnotes('DBI')->{MySQL}->prepare(q~
+		SELECT
+			s_ipv4address														AS IPv4Address
+			,i_port																AS Port
+			,s_rconpassword														AS RconPassword
+		FROM
+			steam.server
+		WHERE
+			id = ?
+	~);
+	$sth->execute($ServerId);
+	while (my $row = $sth->fetchrow_hashref()) {
+		my $playerSlot = -1;
+		my $rconRet = qx(echo 'players' | /var/www/perl-bercon -i $row->{IPv4Address} -p $row->{Port} -r $row->{RconPassword});
+		$rconRet =~ s~^(?:<|\[#\]|---|\(\d+ )(.*)~~mg;
+		utf8::decode($rconRet);
+		utf8::decode($rconRet);
+		foreach my $rconRow (split(/\n/, $rconRet)) {
+			if ($rconRow =~ /^(\d+)[ ]+((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):\d{4,5})[ ]+\d+[ ]+(\w{32})(\([^)]+\))[ ]+(.*)/ && $4 eq $BattlEyeGUID ) {
+				$playerSlot = $1;
+				last;
+			}
+		}
+		
+		if ($playerSlot >= 0) {
+			qx(echo 'kick $playerSlot Wir schliessen' | /var/www/perl-bercon -i $row->{IPv4Address} -p $row->{Port} -r $row->{RconPassword});
+		}
+	}
+	$sth->finish();
+}
+</%init>

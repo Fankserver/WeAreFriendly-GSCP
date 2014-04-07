@@ -1,0 +1,90 @@
+<%perl>
+if ($ENV{HTTP_X_REQUESTED_WITH} eq 'XMLHttpRequest') {
+	my @cashLog;
+	
+	my $sth = $r->pnotes('DBI')->{MySQL}->prepare(q~
+		SELECT
+			UNIX_TIMESTAMP(dt_inserted)*1000									AS DateInserted
+			,AVG(i_bankacc)														AS BankAcc
+			,AVG(i_cash)														AS Cash
+		FROM
+			arma3life.players_cashlog
+		WHERE
+			s_playeruid NOT IN (76561198000074241)
+		GROUP BY
+			HOUR(dt_inserted)
+			,DAY(dt_inserted)
+			,YEAR(dt_inserted)
+		ORDER BY
+			YEAR(dt_inserted)
+			,DAY(dt_inserted)
+			,HOUR(dt_inserted)
+	~);
+	$sth->execute();
+	while (my $row = $sth->fetchrow_hashref()) {
+		push(@cashLog, [
+			int($row->{DateInserted})
+			,int(($cashType ? $row->{BankAcc} : $row->{Cash}))
+		]);
+	}
+	$sth->finish();
+	
+	$m->print(JSON::XS->new->encode({data => \@cashLog}));
+}
+else {
+</%perl>
+<div id="container"></div>
+<script type="text/javascript">
+$(function() {
+	var seriesOptions = [],
+		yAxisOptions = [],
+		seriesCounter = 0,
+		types = ['Cash','Bank'],
+		colors = Highcharts.getOptions().colors;
+
+	$.each(types, function(i, type) {
+		$.getJSON('global.money.html?CashType='+ type.toLowerCase(), function(response) {
+			seriesOptions[i] = {
+				name: type
+				,data: response.data
+			};
+			
+			// As we're loading the data asynchronously, we don't know what order it will arrive. So
+			// we keep a counter and create the chart when all the data is loaded.
+			seriesCounter++;
+	
+			if (seriesCounter == types.length) {
+				createChart();
+			}
+		});
+	});
+	
+	// create the chart when all data is loaded
+	function createChart() {
+		$('#container').highcharts('StockChart', {
+		    rangeSelector: {
+				inputEnabled: $('#container').width() > 480,
+		        selected: 2
+		    },
+		    
+		    yAxis: {
+		    	plotLines: [{
+		    		value: 0,
+		    		width: 2,
+		    		color: 'silver'
+		    	}]
+		    },
+		    
+		    tooltip: {
+		    	valueDecimals: 0
+		    },
+		    
+		    series: seriesOptions
+		});
+	}
+});
+</script>
+% }
+<%args>
+$cashType	=> ($m->request_args->{CashType} =~ /bank/ ? 1 : 0)
+</%args>

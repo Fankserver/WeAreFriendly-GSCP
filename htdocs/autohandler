@@ -1,0 +1,34 @@
+<%init>
+	use utf8;
+	
+	my $content = $m->scomp($m->fetch_next);
+</%init>
+<%perl>
+if ($ENV{HTTP_X_REQUESTED_WITH} eq 'XMLHttpRequest' || $r->pnotes('json')) {
+	print $content;
+}
+else {
+</%perl>
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="de" lang="de">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<title>GSCP</title>
+		<link rel="stylesheet" href="/libs/css/main.css" />
+		<link rel="stylesheet" href="/libs/css/bootstrap.min.css" />
+		<link rel="stylesheet" href="/libs/css/select2.css" />
+		<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.0.min.js"></script>
+		<script src="http://code.highcharts.com/stock/highstock.js"></script>
+		<script src="http://code.highcharts.com/stock/modules/exporting.js"></script>
+		<script src="/libs/js/select2.min.js"></script>
+	</head>
+	<body>
+		<% $content %>
+	</body>
+</html>
+<%perl>
+}
+</%perl>

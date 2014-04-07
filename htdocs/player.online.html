@@ -1,0 +1,186 @@
+% if ($ENV{HTTP_X_REQUESTED_WITH} eq 'XMLHttpRequest') {
+% foreach my $rconLine (split(/\n/, $rconRet)) { if ($rconLine =~ /^(\d+)[ ]+((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):\d{4,5})[ ]+\d+[ ]+(\w{32})(\([^)]+\))[ ]+(.*)/) {
+%	my $steamId = getSteamId($4);
+	<tr BattlEyeGUID="<% $4 %>" SteamId="<% $steamId %>">
+		<td><% $1 %></td>
+		<td><% $2 %></td>
+		<td><% $GeoReader->omni(ip => $3)->country()->iso_code() %></td>
+		<td><% $steamId %></td>
+		<td><% $4 %></td>
+		<td><% $5 %></td>
+		<td><% $6 %></td>
+%	my $vacStatus = vacCheck($steamId);
+		<td><% ($vacStatus ? ('<b style="color:'.($vacStatus == 2 ? '#00ff00' : '#ff0000').'">[VAC]</b>') : '') %></td>
+		<td><button name="KickPlayer">Kick</button></td>
+		<td><button name="BanPlayer">BAN</button></td>
+	</tr>
+% } }
+% } else {
+<select name="selectList">
+% foreach my $server (@serverList) {
+	<option value="<% $server->{ServerId} %>"><% $server->{Comment} %></option>
+% }
+</select>
+<button name="selectServer">Select</button>
+<br/>
+<table class="PlayerOnline">
+	<tr>
+		<th>#</th>
+		<th>IP</th>
+		<th>Country</th>
+		<th>SteamID</th>
+		<th>BattlEye GUID</th>
+		<th>GUID Status</th>
+		<th>PlayerName</th>
+		<th>-</th>
+		<th colspan="2">:)</th>
+	</tr>
+</table>
+<style>
+table.PlayerOnline {
+	width: 100%;
+}
+table.PlayerOnline tr:not(:last-child) {
+	border-bottom: 1px solid grey;
+}
+</style>
+<script type="text/javascript">
+$(function(){
+	var $table = $('table.PlayerOnline');
+	var $serverList = $('select[name="selectList"]');
+	$('button[name="selectServer"]').click(function(event){
+		$.ajax({
+			url: 'player.online.html'
+			,async: false
+			,data: {
+				ServerId: $serverList.val()
+			}
+			,beforeSend: function(jqXHR, settings) {
+				$table.find('tr:not(:first-child)').remove();
+			}
+			,success: function(data, textStatus, jqXHR) {
+				$table.append(data);
+			}
+		});
+	});
+	$table.on('click', 'button[name]', function(event) {
+		var $button = $(event.currentTarget);
+		
+		if ($button.is('[name="KickPlayer"]')) {
+			$.ajax({
+				url: 'player.kick.html'
+				,data: {
+					ServerId: $serverList.val()
+					,BattlEyeGUID: $button.parents('tr:first').attr('BattlEyeGUID')
+				}
+			});
+		}
+		if ($button.is('[name="BanPlayer"]')) {
+			$.ajax({
+				url: 'player.kick.html'
+				,data: {
+					ServerId: $serverList.val()
+					,BattlEyeGUID: $button.parents('tr:first').attr('BattlEyeGUID')
+					,Ban: 1
+				}
+				//,beforeSend: function(jqXHR, settings) {
+				//	$table.find('tr:not(:first-child)').remove();
+				//}
+				//,success: function(data, textStatus, jqXHR) {
+				//	$table.append(data);
+				//}
+			});
+		}
+	});
+});
+</script>
+% }
+<%args>
+$ServerId	=> $m->request_args->{ServerId} =~ /^(\d+)$/ ? $1 : 0
+</%args>
+<%init>
+my $rconRet = '';
+my @serverList;
+
+my $sth = $r->pnotes('DBI')->{MySQL}->prepare(q~
+	SELECT
+		id																		AS ServerId
+		,s_comment																AS Comment
+	FROM
+		steam.server
+~);
+$sth->execute();
+while (my $row = $sth->fetchrow_hashref()) {
+	push(@serverList, $row);
+}
+$sth->finish();
+	
+if ($ServerId > 0) {
+	my $sth = $r->pnotes('DBI')->{MySQL}->prepare(q~
+		SELECT
+			s_ipv4address														AS IPv4Address
+			,i_port																AS Port
+			,s_rconpassword														AS RconPassword
+		FROM
+			steam.server
+		WHERE
+			id = ?
+	~);
+	$sth->execute($ServerId);
+	while (my $row = $sth->fetchrow_hashref()) {
+		$rconRet = qx(echo 'players' | /var/www/perl-bercon -i $row->{IPv4Address} -p $row->{Port} -r $row->{RconPassword});
+		$rconRet =~ s~^(?:<|\[#\]|---|\(\d+ )(.*)~~mg;
+		utf8::decode($rconRet);
+		utf8::decode($rconRet);
+	}
+	$sth->finish();
+}
+
+my $GeoReader = GeoIP2::Database::Reader->new(
+    file    => '/var/www/GeoLite2-Country.mmdb',
+    locales => ['de']
+);
+
+sub getSteamId {
+	my $guid = shift;
+	my $steamId;
+	my $sth = $r->pnotes('DBI')->{MySQL}->prepare(q~
+		SELECT
+			i_steamid															AS SteamId
+		FROM
+			steam.account
+		WHERE
+			s_battleyeguid = ?
+	~);
+	$sth->execute(
+		$guid
+	);
+	while (my $row = $sth->fetchrow_hashref()) {
+		$steamId = $row->{SteamId}
+	}
+	$sth->finish();
+	
+	return $steamId;
+}
+
+sub vacCheck {
+	my $steamId = shift;
+	my $vac = 0;
+	my $sth = $r->pnotes('DBI')->{MySQL}->prepare(q~
+		SELECT
+			(CASE WHEN b_bypassvac THEN 2 ELSE (CASE WHEN b_vacbanned THEN 1 ELSE 0 END) END)
+																				AS VacBanned
+		FROM
+			steam.account
+		WHERE
+			i_steamid = ?
+	~);
+	$sth->execute($steamId);
+	while (my $row = $sth->fetchrow_hashref()) {
+		$vac = $row->{VacBanned};
+	}
+	$sth->finish();
+	
+	return $vac;
+}
+</%init>
