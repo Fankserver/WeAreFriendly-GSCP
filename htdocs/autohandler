@@ -2,6 +2,8 @@
 	use utf8;
 	$r->content_type('text/html; charset="UTF-8"');
 
+	$r->pnotes('head' => {});
+
 # Javascript
 	push @{$r->pnotes('head')->{'javascript'}}, 'jquery.js';
 	push @{$r->pnotes('head')->{'javascript'}}, 'select2.min.js';
