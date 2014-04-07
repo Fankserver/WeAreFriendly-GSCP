@@ -24,6 +24,9 @@ sub connect {
 		'DBI:mysql:database='.$self->{Database}.';host='.$self->{Host}.';port='.$self->{Password}
 		,$self->{User}
 		,$self->{Password}
+		,{
+			mysql_enable_utf8 => 1
+		}
 	);
 }
 

@@ -10,12 +10,25 @@
 	<input type="text" name="Reason" class="form-control" placeholder="Reason" />
 </div>
 <button class="OpenBanDialog">Add</button>
+<br />
+<table class="table table-striped">
+% foreach ($SteamBan->getBans()) {
+	<tr BanId="<% $_->{BanId} %>">
+		<td><% $_->{SteamId} %></td>
+		<td><% $_->{BattlEyeGUID} %></td>
+		<td><% $_->{BanTypeName} %></td>
+		<td><% $_->{BanReason} %></td>
+		<td <% ($_->{BanPermanent} ? 'PermaBan' : '') %>><% ($_->{BanPermanent} ? 'PermaBan' : $_->{BanExpire}) %></td>
+		<td><button class="UnBan">DELETE</button></td>
+	</tr>
+% }
+</table>
 <style>
 ul.ui-autocomplete { width: 965px; }
 .BanAddDialog input[name="SteamId"] { width: 160px; }
 .BanAddDialog input[name="Expire"] { width: 90px; }
 .BanAddDialog input[name="Permanent"] { width: 16px; }
-.BanAddDialog input[name="Reason"] { width: 420px; }
+.BanAddDialog input[name="Reason"] { width: 410px; }
 </style>
 <script type="text/javascript" charset="utf-8">
 $(function(){
@@ -120,6 +133,10 @@ $(function(){
 });
 </script>
 <%init>
+my $SteamBan = new WAF::Steam::Ban({
+	MySQL	=> $r->pnotes('DBI')->{MySQL}
+});
+
 my @banTypes;
 my $sth = $r->pnotes('DBI')->{MySQL}->prepare(q~
 	SELECT
@@ -133,5 +150,5 @@ $sth->execute();
 while (my $row = $sth->fetchrow_hashref()) {
 	push(@banTypes, $row);
 }
-$sth->finish();	
+$sth->finish();
 </%init>

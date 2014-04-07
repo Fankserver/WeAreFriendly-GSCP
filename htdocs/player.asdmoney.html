@@ -42,7 +42,7 @@ $(function() {
 		colors = Highcharts.getOptions().colors;
 
 	$.each(types, function(i, type) {
-		$.getJSON('player.money.html?PlayerUID=<% $PlayerUID %>&CashType='+ type.toLowerCase(), function(response) {
+		$.getJSON('player.asdmoney.html?PlayerUID=<% $PlayerUID %>&CashType='+ type.toLowerCase(), function(response) {
 			seriesOptions[i] = {
 				name: type
 				,data: response.data

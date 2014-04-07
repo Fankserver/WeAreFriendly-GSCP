@@ -13,8 +13,19 @@ my $sth = $r->pnotes('DBI')->{MySQL}->prepare(q~
 		,SteamAcc.dt_check														AS VACChecked
 		,(CASE WHEN SteamAcc.b_bypassvac = 1 THEN 1 ELSE 0 END)					AS ByPassVAC
 		,(CASE WHEN SteamAcc.b_bypasscountry = 1 THEN 1 ELSE 0 END)				AS ByPassCountry
-		,(SELECT (CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END) FROM steam.bans WHERE dt_deleted IS NULL AND i_account_id = SteamAcc.id AND dt_expire >= NOW())
-																				AS IsBanned
+		,(
+			SELECT
+				(CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END)
+			FROM
+				steam.ban
+			WHERE
+				dt_deleted IS NULL
+				AND i_account_id = SteamAcc.id
+				AND (
+					(b_permanent = 0 AND dt_expire > NOW())
+					OR b_permanent = 1
+				)
+		)																		AS IsBanned
 	FROM
 		steam.account SteamAcc
 	WHERE
