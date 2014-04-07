@@ -1,0 +1,35 @@
+<%args>
+$SteamId		=> $m->request_args()->{SteamId} =~ /^(\d+)$/ && $1 > 0 ? $1 : undef
+$BattlEyeGUID	=> $m->request_args()->{BattlEyeGUID} =~ /^(\w{32})$/ ? $1 : undef
+</%args>
+<%init>
+my @restrictions;
+if ($SteamId != undef) {
+	push(@restrictions, "i_steamid LIKE '%".$SteamId."%'");
+}
+if ($BattlEyeGUID != undef) {
+	push(@restrictions, "s_battleyeguid = '".$BattlEyeGUID."'");
+}
+
+my $players = [];
+
+if (scalar(@restrictions) > 0) {
+	my $sth = $r->pnotes('DBI')->{MySQL}->prepare(q~
+		SELECT
+			SteamAcc.id																AS AccId
+			,SteamAcc.i_steamid														AS SteamId
+			,SteamAcc.s_battleyeguid												AS BattlEyeGUID
+		FROM
+			steam.account SteamAcc
+		WHERE
+			~.join(' AND ',@restrictions).q~
+	~);
+	$sth->execute();
+	while (my $row = $sth->fetchrow_hashref()) {
+		push(@{$players}, $row);
+	}
+	$sth->finish();
+}
+
+print JSON::XS->new->encode($players);
+</%init>

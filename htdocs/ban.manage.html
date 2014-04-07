@@ -1,0 +1,47 @@
+<div class="BanAddDialog">
+	<input class="SteamId" />
+</div>
+<button class="OpenBanDialog">Add</button>
+<script type="text/javascript" charset="utf-8">
+$(function(){
+	var $BanAddDialog = $('.BanAddDialog');
+
+	$BanAddDialog.dialog({
+		autoOpen: false
+		,buttons: [{
+			text: 'Ban'
+			,click: function() {
+				$( this ).dialog( "close" );
+			}
+		}]
+	});
+
+	$('.OpenBanDialog').click(function(){
+		$BanAddDialog.dialog('open');
+	});
+
+	$BanAddDialog.find('input.SteamId:first').focus(function(){
+		$(this).val();
+	}).autocomplete({
+		source: function(request, response) {
+			$.ajax({
+				type: 'POST'
+				,url: 'player.autocomplete.html'
+				,dataType: 'json'
+				,data: {
+					SteamId: request.term
+				}
+				,success: function(data) {
+					response($.map(data, function(item) {
+						item.value = item.AccId;
+						return item;
+					}));
+				}
+			});
+		}
+		,select: function(event ,ui) {
+			console.log(event, ui);
+		}
+	});
+});
+</script>
