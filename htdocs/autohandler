@@ -6,6 +6,7 @@
 
 # Javascript
 	push @{$r->pnotes('head')->{'javascript'}}, 'jquery.js';
+	push @{$r->pnotes('head')->{'javascript'}}, 'jquery.ui.js';
 	push @{$r->pnotes('head')->{'javascript'}}, 'select2.min.js';
 
 # CSS

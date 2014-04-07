@@ -1,26 +1,33 @@
 <%args>
 $SteamId		=> $m->request_args()->{SteamId} =~ /^(\d+)$/ && $1 > 0 ? $1 : undef
 $BattlEyeGUID	=> $m->request_args()->{BattlEyeGUID} =~ /^(\w{32})$/ ? $1 : undef
+$PlayerName		=> $m->request_args()->{PlayerName}
 </%args>
 <%init>
 my @restrictions;
 if ($SteamId != undef) {
-	push(@restrictions, "i_steamid LIKE '%".$SteamId."%'");
+	push(@restrictions, "SteamAcc.i_steamid LIKE '%".$SteamId."%'");
 }
 if ($BattlEyeGUID != undef) {
-	push(@restrictions, "s_battleyeguid = '".$BattlEyeGUID."'");
+	push(@restrictions, "SteamAcc.s_battleyeguid = '".$BattlEyeGUID."'");
 }
+if ($PlayerName) {
+	push(@restrictions, "Player.`name` LIKE '%".$BattlEyeGUID."%'");
+}
+
 
 my $players = [];
 
 if (scalar(@restrictions) > 0) {
 	my $sth = $r->pnotes('DBI')->{MySQL}->prepare(q~
 		SELECT
-			SteamAcc.id																AS AccId
-			,SteamAcc.i_steamid														AS SteamId
-			,SteamAcc.s_battleyeguid												AS BattlEyeGUID
+			SteamAcc.id															AS AccountId
+			,SteamAcc.i_steamid													AS SteamId
+			,SteamAcc.s_battleyeguid											AS BattlEyeGUID
+			,Player.`name`														AS PlayerName
 		FROM
 			steam.account SteamAcc
+			LEFT OUTER JOIN arma3life.players Player ON Player.playerid = SteamAcc.i_steamid
 		WHERE
 			~.join(' AND ',@restrictions).q~
 	~);

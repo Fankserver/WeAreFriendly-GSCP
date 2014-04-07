@@ -1,0 +1,8 @@
+<%init>
+my $SteamBan = new WAF::Steam::Ban({
+	MySQL	=> $r->pnotes('DBI')->{MySQL}
+});
+my $ban = $SteamBan->addBan({$m->request_args()});
+
+print JSON::XS->new->encode($ban);
+</%init>
