@@ -1,6 +1,17 @@
 <%init>
 	use utf8;
-	
+	$r->content_type('text/html; charset="UTF-8"');
+
+# Javascript
+	push @{$r->pnotes('head')->{'javascript'}}, 'jquery.js';
+	push @{$r->pnotes('head')->{'javascript'}}, 'select2.min.js';
+
+# CSS
+	push @{$r->pnotes('head')->{'css'}}, 'main.css';
+	push @{$r->pnotes('head')->{'css'}}, 'jquery.ui.css';
+	push @{$r->pnotes('head')->{'css'}}, 'bootstrap.css';
+	push @{$r->pnotes('head')->{'css'}}, 'select2.css';
+
 	my $content = $m->scomp($m->fetch_next);
 </%init>
 <%perl>
@@ -17,13 +28,16 @@ else {
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 		<title>GSCP</title>
-		<link rel="stylesheet" href="/libs/css/main.css" />
-		<link rel="stylesheet" href="/libs/css/bootstrap.min.css" />
-		<link rel="stylesheet" href="/libs/css/select2.css" />
-		<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.0.min.js"></script>
+%	my $cssTemp = {};
+%	foreach ( @{$r->pnotes('head')->{'css'}} ) { if ($cssTemp->{$_}) { next } else { $cssTemp->{$_} = 1 }
+		<link rel="stylesheet" type="text/css" href="/libs/css/<% $_ %>" />
+%	}
+%	my $javascriptTemp = {};
+%	foreach ( @{$r->pnotes('head')->{'javascript'}} ) { if ($javascriptTemp->{$_}) { next } else { $javascriptTemp->{$_} = 1 }
+		<script type="text/javascript" charset="utf-8" src="/libs/js/<% $_ %>"></script>
+%	}
 		<script src="http://code.highcharts.com/stock/highstock.js"></script>
 		<script src="http://code.highcharts.com/stock/modules/exporting.js"></script>
-		<script src="/libs/js/select2.min.js"></script>
 	</head>
 	<body>
 		<% $content %>
