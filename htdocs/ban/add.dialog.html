@@ -5,7 +5,7 @@
 		<option value="<% $_->{Id} %>"><% $_->{Name} %></option>
 % }
 	</select>
-	<input type="text" name="Expire" class="form-control" />
+	<input type="text" name="Expire" class="form-control" placeholder="dd.mm.yyyy" />
 	<input type="checkbox" name="Permanent" class="form-control" />
 	<input type="text" name="Reason" class="form-control" placeholder="Reason" />
 	<style scoped="scoped">
@@ -64,7 +64,7 @@ $(function(){
 			var $dialog = $(this);
 
 			$dialog.removeAttr('AccountId');
-			$dialog.find('[name="BanType"]').val('');
+			$dialog.find('[name="SteamId"]').val('');
 			$dialog.find('[name="Expire"]').val('');
 			$dialog.find('[name="Permanent"]').prop('checked', false);
 			$dialog.find('[name="Reason"]').val('');
