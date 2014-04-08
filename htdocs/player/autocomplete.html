@@ -3,5 +3,6 @@ my $SteamAccount = new WAF::Steam::Account({
 	MySQL	=> $r->pnotes('DBI')->{MySQL}
 });
 
-print JSON::XS->new->encode($SteamAccount->getAccountsAutocomplete({$m->request_args()}));
+my @accounts = $SteamAccount->getAccountsAutocomplete({$m->request_args()});
+print JSON::XS->new->encode(\@accounts);
 </%init>

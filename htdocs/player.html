@@ -5,7 +5,7 @@
 				<span><% $player->{SteamId} %></span>
 				<span><% $player->{PlayerName} %></span>
 			</div>
-			<div class="w-box-content cnt_a"><& player.money.html, PlayerUID => $player->{SteamId} &></div>
+			<div class="w-box-content cnt_a"><& player/money.history.html, PlayerUID => $player->{SteamId} &></div>
 			<div class="w-box-footer"></div>
 		</div>
 	</div>
@@ -43,7 +43,7 @@
 				<span><% $player->{SteamId} %></span>
 				<span><% $player->{PlayerName} %></span>
 			</div>
-			<div class="w-box-content cnt_a"><& player.money.html, PlayerUID => $player->{SteamId} &></div>
+			<div class="w-box-content cnt_a"></div>
 			<div class="w-box-footer"></div>
 		</div>
 	</div>
@@ -81,11 +81,12 @@ $sth->execute(
 );
 while (my $row = $sth->fetchrow_hashref()) {
 	$player = { %{$player}, %{$row} };
-	$player->{CopLicenses} =~ s~[\[\]`]~~g;
-	
+
+	$player->{CopLicenses} =~ s~[\[\]`"]~~g;
 	my @copLicenses = split(/,/, $player->{CopLicenses});
 	$player->{CopLicenses} = {@copLicenses};
-	
+
+	$player->{CivLicenses} =~ s~[\[\]`"]~~g;
 	my @civLicenses = split(/,/, $player->{CivLicenses});
 	$player->{CivLicenses} = {@civLicenses};
 }
