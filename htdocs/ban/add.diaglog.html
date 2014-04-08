@@ -1,0 +1,126 @@
+<div class="BanAddDialog form-inline">
+	<input type="text" name="SteamId" class="form-control SteamId" placeholder="SteamId" />
+	<select name="BanType" class="form-control">
+% foreach (@banTypes) {
+		<option value="<% $_->{Id} %>"><% $_->{Name} %></option>
+% }
+	</select>
+	<input type="text" name="Expire" class="form-control" />
+	<input type="checkbox" name="Permanent" class="form-control" />
+	<input type="text" name="Reason" class="form-control" placeholder="Reason" />
+	<style scoped="scoped">
+	ul.ui-autocomplete { width: 965px; }
+	input[name="SteamId"] { width: 160px; }
+	input[name="Expire"] { width: 90px; }
+	input[name="Permanent"] { width: 16px; }
+	input[name="Reason"] { width: 410px; }
+	</style>
+</div>
+<script type="text/javascript" charset="utf-8">
+var $BanAddDialog;
+$(function(){
+	$BanAddDialog = $('.BanAddDialog');
+
+	$BanAddDialog.dialog({
+		autoOpen: false
+		,width: 1000
+		,height: 160
+		,draggable: false
+		,resizable: false
+		,modal: true
+		,buttons: [{
+			text: 'Ban'
+			,click: function() {
+				var $dialog = $(this);
+
+				if ($dialog.attr('AccountId')) {
+					console.log(
+						$dialog.attr('AccountId')
+						,$dialog.find('[name="BanType"]').val()
+						,$dialog.find('[name="Expire"]').val()
+						,$dialog.find('[name="Permanent"]').prop('checked')
+						,$dialog.find('[name="Reason"]').val()
+					);
+					$.ajax({
+						type: 'POST',
+						url: '/ban/add.html',
+						dataType: 'json',
+						data: {
+							AccountId: $dialog.attr('AccountId')
+							,BanTypeId: $dialog.find('[name="BanType"]').val()
+							,Expire: $dialog.find('[name="Expire"]').val()
+							,Permanent: ($dialog.find('[name="Permanent"]').prop('checked') ? 1 : 0)
+							,Reason: $dialog.find('[name="Reason"]').val()
+						},
+						success: function(data) {
+							console.log(data);
+						}
+					});
+					$dialog.dialog('close');
+				}
+			}
+		}]
+		,close: function(event ,ui) {
+			var $dialog = $(this);
+
+			$dialog.removeAttr('AccountId');
+			$dialog.find('[name="BanType"]').val('');
+			$dialog.find('[name="Expire"]').val('');
+			$dialog.find('[name="Permanent"]').prop('checked', false);
+			$dialog.find('[name="Reason"]').val('');
+		}
+	});
+
+	$BanAddDialog.find('input.SteamId:first').focus(function(){
+		$(this).val();
+	}).autocomplete({
+		appendTo: 'body'
+		,source: function(request, response) {
+			$.ajax({
+				type: 'POST'
+				,url: '/player.autocomplete.html'
+				,dataType: 'json'
+				,data: {
+					SteamId: request.term
+				}
+				,success: function(data) {
+					response($.map(data, function(item) {
+						item.value = item.SteamId;
+						return item;
+					}));
+				}
+			});
+		}
+		,select: function(event ,ui) {
+			$BanAddDialog.attr('AccountId', ui.item.AccountId);
+		}
+	}).data('ui-autocomplete')._renderItem = function(ul, item) {
+		 return $('<li>')
+			.append(
+				$('<a>')
+					.append(
+						$('<div>').css({width: 180, float: 'left'}).html(item.SteamId)
+					)
+					.append(
+						$('<div>').css({width: 330, float: 'left'}).html(item.BattlEyeGUID)
+					)
+					.append(
+						$('<div>').css({width: 440, float: 'left'}).html(item.PlayerName)
+					)
+					.append(
+						$('<div>').css({clear: 'both'})
+					)
+			)
+			.appendTo(ul);
+	};
+
+	$BanAddDialog.find('input[name="Expire"]').datepicker({
+		dateFormat: 'dd.mm.yy'
+		,defaultDate: new Date()
+		,showButtonPanel: true
+		,numberOfMonths: 3
+		,showWeek: true
+		,firstDay: 1
+	});
+});
+</script>
