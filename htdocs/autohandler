@@ -21,7 +21,7 @@
 	}
 
 	my $content = $m->scomp($m->fetch_next);
-	if ($r->pnotes('session')->get('SteamId') !~ m~^(?:76561198000074241|76561198088767395|76561197999457026)$~) {
+	if ($r->pnotes('session')->get('SteamId') !~ m~^(?:76561198000074241|76561198037919297)$~) {
 		$content = $m->scomp('/index.html');
 	}
 </%init>
