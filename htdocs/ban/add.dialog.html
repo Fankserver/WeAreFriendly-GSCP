@@ -81,7 +81,7 @@ $(function(){
 				,url: '/player/autocomplete.html'
 				,dataType: 'json'
 				,data: {
-					q: request.term
+					SteamId: request.term
 				}
 				,success: function(data) {
 					response($.map(data, function(item) {
