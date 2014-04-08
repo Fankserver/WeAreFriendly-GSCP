@@ -15,7 +15,15 @@
 	push @{$r->pnotes('head')->{'css'}}, 'bootstrap.css';
 	push @{$r->pnotes('head')->{'css'}}, 'select2.css';
 
+# Login
+	if ($r->pnotes('session')->get('SteamId') == 0) {
+		$m->redirect('/steam/login');
+	}
+
 	my $content = $m->scomp($m->fetch_next);
+	if ($r->pnotes('session')->get('SteamId') !~ m~^(?:76561198000074241|76561198088767395|76561197999457026)$~) {
+		$content = $m->scomp('/index.html');
+	}
 </%init>
 <%perl>
 if ($ENV{HTTP_X_REQUESTED_WITH} eq 'XMLHttpRequest' || $r->pnotes('json')) {

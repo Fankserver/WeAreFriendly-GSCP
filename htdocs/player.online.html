@@ -66,7 +66,7 @@ $(function(){
 	});
 	$table.on('click', 'button[name]', function(event) {
 		var $button = $(event.currentTarget);
-		var $row = $button.find('tr:first');
+		var $row = $button.parents('tr:first');
 
 		if ($button.is('[name="KickPlayer"]')) {
 			$.ajax({

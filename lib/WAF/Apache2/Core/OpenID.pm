@@ -60,6 +60,12 @@ sub handler {
 				my ($vident) = @_;
 				my $verified_url = $vident->url;
 				print STDERR "You are $verified_url !";
+
+				if ($verified_url =~ m~http://steamcommunity\.com/openid/id/(\d+)~) {
+					$r->pnotes('session')->set('SteamId', $1);
+					$r->headers_out->set(Location => 'http://gscp.waf.fankservercdn.com/');
+					return Apache2::Const::REDIRECT;
+				}
 			},
 			error => sub {
 				my ($errcode,$errtext) = @_;
@@ -71,7 +77,6 @@ sub handler {
 	}
 
 	#$r->pnotes(OpenID => $OpenID);
-
 	return Apache2::Const::DECLINED;
 }
 

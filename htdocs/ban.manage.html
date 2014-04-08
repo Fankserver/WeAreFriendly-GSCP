@@ -7,23 +7,3 @@ $(function(){
 	});
 });
 </script>
-<%init>
-my $SteamBan = new WAF::Steam::Ban({
-	MySQL	=> $r->pnotes('DBI')->{MySQL}
-});
-
-my @banTypes;
-my $sth = $r->pnotes('DBI')->{MySQL}->prepare(q~
-	SELECT
-		id																		AS Id
-		,s_name																	AS Name
-		,s_description															AS Description
-	FROM
-		steam.banType;
-~);
-$sth->execute();
-while (my $row = $sth->fetchrow_hashref()) {
-	push(@banTypes, $row);
-}
-$sth->finish();
-</%init>
