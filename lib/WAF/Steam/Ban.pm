@@ -25,6 +25,7 @@ sub addBan {
 			|| (defined($args->{Permanent}) && $args->{Permanent} =~ /^1$/)
 		)
 		&& (defined($args->{Reason}) && $args->{Reason})
+		&& (defined($args->{OperatorId}) && $args->{OperatorId})
 	) {
 		my $sth = $self->{MySQL}->prepare(q~
 			INSERT INTO steam.ban (
@@ -34,6 +35,7 @@ sub addBan {
 				,dt_expire
 				,b_permanent
 				,s_reason
+				,s_admin
 			)
 			VALUES (
 				?
@@ -42,6 +44,7 @@ sub addBan {
 				,?
 				,~.($args->{Permanent} =~ /1/ ? 1 : 0).q~
 				,?
+				,?
 			);
 		~);
 		$sth->execute(
@@ -49,6 +52,7 @@ sub addBan {
 			,$args->{BanTypeId}
 			,$args->{Expire}
 			,$args->{Reason}
+			,$args->{OperatorId}
 		);
 		$sth->finish();
 		$return->{success} = 1;
