@@ -1,5 +1,17 @@
 <& /ban/add.dialog.html &>
 <button class="OpenBanDialog">Add</button>
+<table class="table table-striped">
+% foreach ($SteamBan->getBans()) {
+	<tr BanId="<% $_->{BanId} %>">
+		<td><% $_->{SteamId} %></td>
+		<td><% $_->{BattlEyeGUID} %></td>
+		<td><% $_->{BanTypeName} %></td>
+		<td><% $_->{BanReason} %></td>
+		<td <% ($_->{BanPermanent} ? 'PermaBan' : '') %>><% ($_->{BanPermanent} ? 'PermaBan' : $_->{BanExpire}) %></td>
+		<td><button class="UnBan">DELETE</button></td>
+	</tr>
+% }
+</table>
 <script type="text/javascript" charset="utf-8">
 $(function(){
 	$('.OpenBanDialog').click(function(){
@@ -7,3 +19,8 @@ $(function(){
 	});
 });
 </script>
+<%init>
+my $SteamBan = new WAF::Steam::Ban({
+	MySQL	=> $r->pnotes('DBI')->{MySQL}
+});
+</%init>
