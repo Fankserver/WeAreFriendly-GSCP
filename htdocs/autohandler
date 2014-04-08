@@ -2,27 +2,35 @@
 	use utf8;
 	$r->content_type('text/html; charset="UTF-8"');
 
+# global vars
 	$r->pnotes('head' => {});
+	$r->pnotes('json', 0);
+	$r->pnotes('loginByPass', 0);
 
 # Javascript
-	push @{$r->pnotes('head')->{'javascript'}}, 'jquery.js';
-	push @{$r->pnotes('head')->{'javascript'}}, 'jquery.ui.js';
-	push @{$r->pnotes('head')->{'javascript'}}, 'select2.min.js';
+	push @{$r->pnotes('head')->{javascript}}, 'jquery.js';
+	push @{$r->pnotes('head')->{javascript}}, 'jquery.ui.js';
+	push @{$r->pnotes('head')->{javascript}}, 'jquery.highstock.js';
+	push @{$r->pnotes('head')->{javascript}}, 'select2.js';
 
 # CSS
-	push @{$r->pnotes('head')->{'css'}}, 'main.css';
-	push @{$r->pnotes('head')->{'css'}}, 'jquery.ui.css';
-	push @{$r->pnotes('head')->{'css'}}, 'bootstrap.css';
-	push @{$r->pnotes('head')->{'css'}}, 'select2.css';
+	push @{$r->pnotes('head')->{css}}, 'main.css';
+	push @{$r->pnotes('head')->{css}}, 'jquery.ui.css';
+	push @{$r->pnotes('head')->{css}}, 'bootstrap.css';
+	push @{$r->pnotes('head')->{css}}, 'select2.css';
 
-# Login
-	if ($r->pnotes('session')->get('SteamId') == 0) {
+# Logincheck
+	if (!$r->pnotes('session')->get('SteamId') && !$r->pnotes('loginByPass')) {
 		$m->redirect('/steam/login');
 	}
 
-	my $content = $m->scomp($m->fetch_next);
+# Contentparsing
+	my $content = '';
 	if ($r->pnotes('session')->get('SteamId') !~ m~^(?:76561198000074241|76561198037919297)$~) {
 		$content = $m->scomp('/index.html');
+	}
+	else {
+		$content = $m->scomp($m->fetch_next);
 	}
 </%init>
 <%perl>
@@ -38,7 +46,7 @@ else {
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="de" lang="de">
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-		<title>GSCP</title>
+		<title>GSCP<% $r->pnotes('head')->{title} ? ' - '.$r->pnotes('head')->{title} : '' %></title>
 %	my $cssTemp = {};
 %	foreach ( @{$r->pnotes('head')->{'css'}} ) { if ($cssTemp->{$_}) { next } else { $cssTemp->{$_} = 1 }
 		<link rel="stylesheet" type="text/css" href="/libs/css/<% $_ %>" />
@@ -47,8 +55,6 @@ else {
 %	foreach ( @{$r->pnotes('head')->{'javascript'}} ) { if ($javascriptTemp->{$_}) { next } else { $javascriptTemp->{$_} = 1 }
 		<script type="text/javascript" charset="utf-8" src="/libs/js/<% $_ %>"></script>
 %	}
-		<script src="http://code.highcharts.com/stock/highstock.js"></script>
-		<script src="http://code.highcharts.com/stock/modules/exporting.js"></script>
 	</head>
 	<body>
 		<% $content %>

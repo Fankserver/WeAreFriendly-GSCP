@@ -3,13 +3,20 @@ $IP => $m->request_args->{IP};
 </%args>
 <%init>
 $r->pnotes('json', 1);
+$r->pnotes('loginByPass', 1);
 my $GeoReader = GeoIP2::Database::Reader->new(
     file    => '/var/www/GeoLite2-Country.mmdb',
     locales => ['de']
 );
-my $country = $GeoReader->omni(ip => $IP)->country();
-print JSON::XS->new->encode({
-	ISO		=> $country->iso_code()
-	,Name	=> $country->name()
-});
+
+if ($IP) {
+	my $Country = $GeoReader->omni(ip => $IP)->country();
+	print JSON::XS->new->encode({
+		ISO		=> $Country->iso_code()
+		,Name	=> $Country->name()
+	});
+}
+else {
+	print '{}';
+}
 </%init>

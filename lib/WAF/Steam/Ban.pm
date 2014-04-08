@@ -1,14 +1,13 @@
 package WAF::Steam::Ban;
 use strict;
 use warnings;
-use DBI;
 
 sub new {
 	my $class = shift;
 	my $args = shift || {};
-	
+
 	my $self = { (), %{$args} };
-	
+
 	bless($self, $class);
 	return $self;
 }
@@ -17,7 +16,7 @@ sub addBan {
 	my $self = shift;
 	my $args = shift;
 	my $return = {success => 0};
-	
+
 	if (
 		(defined($args->{AccountId}) && $args->{AccountId} =~ /^(\d+)$/ && $1 > 0)
 		&& (defined($args->{BanTypeId}) && $args->{BanTypeId} =~ /^(\d+)$/ && $1 > 0)
@@ -54,22 +53,39 @@ sub addBan {
 		$sth->finish();
 		$return->{success} = 1;
 	}
-	else {
-		
-	}
-	
+
 	return $return;
 }
 
-sub removeBan {
-	
+sub deleteBan {
+	my $self = shift;
+	my $args = shift;
+	my $return = {success => 0};
+
+	if (defined($args->{BanId}) && $args->{BanId} =~ /^(\d+)$/ && $1 > 0) {
+		my $sth = $self->{MySQL}->prepare(q~
+			UPDATE
+				steam.ban
+			SET
+				dt_deleted = NOW()
+			WHERE
+				id = ?
+		~);
+		$sth->execute(
+			$args->{BanId}
+		);
+		$sth->finish();
+		$return->{success} = 1;
+	}
+
+	return $return;
 }
 
 sub getBans {
 	my $self = shift;
 	my $args = shift;
 	my @bans;
-	
+
 	my $sth = $self->{MySQL}->prepare(q~
 		SELECT
 			SteamBan.id															AS BanId
@@ -100,7 +116,7 @@ sub getBans {
 		push(@bans, $row);
 	}
 	$sth->finish();
-	
+
 	return @bans;
 }
 

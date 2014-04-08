@@ -1,0 +1,86 @@
+<%perl>
+if ($ENV{HTTP_X_REQUESTED_WITH} eq 'XMLHttpRequest') {
+	my @cashLog;
+
+	my $sth = $r->pnotes('DBI')->{MySQL}->prepare(q~
+		SELECT
+			UNIX_TIMESTAMP(pml.dt_inserted)*1000								AS DateInserted
+			~.($cashType == 2 ? q~
+			,(pml.i_bankacc + pml.i_cash)										AS BankAcc
+			~ : q~
+			,pml.i_bankacc														AS BankAcc
+			,pml.i_cash															AS Cash
+			~).q~
+		FROM
+			arma3life.playerMoneyLog pml
+			LEFT OUTER JOIN arma3life.players p ON p.uid = pml.i_player_id
+		WHERE
+			p.playerid = ?
+	~);
+	$sth->execute(
+		$m->request_args->{PlayerUID}
+	);
+	while (my $row = $sth->fetchrow_hashref()) {
+		push(@cashLog, [
+			int($row->{DateInserted})
+			,int(($cashType ? $row->{BankAcc} : $row->{Cash}))
+		]);
+	}
+	$sth->finish();
+
+	$m->print(JSON::XS->new->encode({data => \@cashLog}));
+}
+else {
+</%perl>
+<div id="PlayerMoneyContainer"></div>
+<script type="text/javascript">
+$(function() {
+	var seriesOptions = [],
+		yAxisOptions = [],
+		seriesCounter = 0,
+		types = ['All','Bank','Cash'],
+		colors = Highcharts.getOptions().colors;
+
+	$.each(types, function(i, type) {
+		$.getJSON('money.history.html?PlayerUID=<% $PlayerUID %>&CashType='+ type.toLowerCase(), function(response) {
+			seriesOptions[i] = {
+				name: type
+				,data: response.data
+			};
+
+			seriesCounter++;
+			if (seriesCounter == types.length) {
+				createChart();
+			}
+		});
+	});
+
+	function createChart() {
+		$('#PlayerMoneyContainer').highcharts('StockChart', {
+		    rangeSelector: {
+				inputEnabled: $('#PlayerMoneyContainer').width() > 480,
+		        selected: 2
+		    },
+
+		    yAxis: {
+		    	plotLines: [{
+		    		value: 0,
+		    		width: 2,
+		    		color: 'silver'
+		    	}]
+		    },
+
+		    tooltip: {
+		    	valueDecimals: 0
+		    },
+
+		    series: seriesOptions
+		});
+	}
+});
+</script>
+% }
+<%args>
+$PlayerUID => ($m->request_args->{PlayerUID} =~ /^(\d+)$/ ? $1 : 0)
+$cashType	=> ($m->request_args->{CashType} =~ /all/ ? 2 : ($m->request_args->{CashType} =~ /bank/ ? 1 : 0))
+</%args>
