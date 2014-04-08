@@ -52,7 +52,7 @@ sub getAccountsAutocomplete {
 					steam.account SteamAcc
 					LEFT OUTER JOIN arma3life.players Player ON Player.playerid = SteamAcc.i_steamid
 				WHERE
-					~.join(' AND ',@restrictions).q~
+					~.join(' OR ',@restrictions).q~
 			~);
 			$sth->execute();
 			while (my $row = $sth->fetchrow_hashref()) {
