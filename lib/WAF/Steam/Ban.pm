@@ -31,26 +31,25 @@ sub addBan {
 			INSERT INTO steam.ban (
 				i_account_id
 				,i_type_id
-				,dt_inserted
-				,dt_expire
 				,b_permanent
 				,s_reason
-				,s_admin
+				,dt_expire
+				,i_inserted_id
+				,dt_inserted
 			)
 			VALUES (
 				?
 				,?
+				,~.($args->{Permanent} ? 1 : 0).q~
+				,?
+				,~.($args->{Permanent} ? 'NULL' : $args->{Expire}).q~
+				,(SELECT id FROM steam.account WHERE i_steamid = ? LIMIT 1)
 				,NOW()
-				,?
-				,~.($args->{Permanent} =~ /1/ ? 1 : 0).q~
-				,?
-				,?
 			);
 		~);
 		$sth->execute(
 			$args->{AccountId}
 			,$args->{BanTypeId}
-			,$args->{Expire}
 			,$args->{Reason}
 			,$args->{OperatorId}
 		);
@@ -66,17 +65,22 @@ sub deleteBan {
 	my $args = shift;
 	my $return = {success => 0};
 
-	if (defined($args->{BanId}) && $args->{BanId} =~ /^(\d+)$/ && $1 > 0) {
+	if (
+		(defined($args->{BanId}) && $args->{BanId} =~ /^(\d+)$/ && $1 > 0)
+		&& (defined($args->{OperatorId}) && $args->{OperatorId})
+	) {
 		my $sth = $self->{MySQL}->prepare(q~
 			UPDATE
 				steam.ban
 			SET
-				dt_deleted = NOW()
+				i_deleted_id = (SELECT id FROM steam.account WHERE i_steamid = ? LIMIT 1)
+				,dt_deleted = NOW()
 			WHERE
 				id = ?
 		~);
 		$sth->execute(
-			$args->{BanId}
+			$args->{OperatorId}
+			,$args->{BanId}
 		);
 		$sth->finish();
 		$return->{success} = 1;
@@ -101,12 +105,15 @@ sub getBans {
 			,SteamAcc.id														AS AccountId
 			,SteamAcc.i_steamid													AS SteamId
 			,SteamAcc.s_battleyeguid											AS BattlEyeGUID
-			-- ,Player.`name`													AS PlayerName
+			,Player.`name`														AS PlayerName
+			,PlayerOperator.`name`												As OperatorName
 		FROM
 			steam.ban SteamBan
 			LEFT OUTER JOIN steam.banType SteamBanType ON SteamBanType.id = SteamBan.i_type_id
 			LEFT OUTER JOIN steam.account SteamAcc ON SteamAcc.id = SteamBan.i_account_id
-			-- LEFT OUTER JOIN arma3life.players Player ON Player.playerid = SteamAcc.i_steamid
+			LEFT OUTER JOIN arma3life.players Player ON Player.playerid = SteamAcc.i_steamid
+			LEFT OUTER JOIN steam.account SteamAccOperator ON SteamAccOperator.id = SteamBan.i_inserted_id
+			LEFT OUTER JOIN arma3life.players PlayerOperator ON PlayerOperator.playerid = SteamAccOperator.i_steamid
 		WHERE
 			SteamBan.dt_deleted IS NULL
 			AND (

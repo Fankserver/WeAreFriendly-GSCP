@@ -44,10 +44,10 @@ sub getAccountsAutocomplete {
 		if (scalar(@restrictions) > 0) {
 			my $sth = $self->{MySQL}->prepare(q~
 				SELECT
-					SteamAcc.id															AS AccountId
-					,SteamAcc.i_steamid													AS SteamId
-					,SteamAcc.s_battleyeguid											AS BattlEyeGUID
-					,Player.`name`														AS PlayerName
+					SteamAcc.id													AS AccountId
+					,SteamAcc.i_steamid											AS SteamId
+					,SteamAcc.s_battleyeguid									AS BattlEyeGUID
+					,Player.`name`												AS PlayerName
 				FROM
 					steam.account SteamAcc
 					LEFT OUTER JOIN arma3life.players Player ON Player.playerid = SteamAcc.i_steamid

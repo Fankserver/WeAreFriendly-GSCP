@@ -34,13 +34,6 @@ $(function(){
 				var $dialog = $(this);
 
 				if ($dialog.attr('AccountId')) {
-					console.log(
-						$dialog.attr('AccountId')
-						,$dialog.find('[name="BanType"]').val()
-						,$dialog.find('[name="Expire"]').val()
-						,$dialog.find('[name="Permanent"]').prop('checked')
-						,$dialog.find('[name="Reason"]').val()
-					);
 					$.ajax({
 						type: 'POST',
 						url: '/ban/add.html',
@@ -50,10 +43,10 @@ $(function(){
 							,BanTypeId: $dialog.find('[name="BanType"]').val()
 							,Expire: $dialog.find('[name="Expire"]').val()
 							,Permanent: ($dialog.find('[name="Permanent"]').prop('checked') ? 1 : 0)
-							,Reason: $dialog.find('[name="Reason"]').val()
+							,Reason: $dialog.find('[name="Reason"]').val().trim()
 						},
 						success: function(data) {
-							console.log(data);
+							//console.log(data);
 						}
 					});
 					$dialog.dialog('close');
@@ -81,7 +74,7 @@ $(function(){
 				,url: '/player/autocomplete.html'
 				,dataType: 'json'
 				,data: {
-					SteamId: request.term
+					SteamId: request.term.trim()
 				}
 				,success: function(data) {
 					response($.map(data, function(item) {
