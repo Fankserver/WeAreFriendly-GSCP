@@ -5,10 +5,12 @@
 	<tr BanId="<% $_->{BanId} %>">
 		<td><% $_->{SteamId} %></td>
 		<td><% $_->{BattlEyeGUID} %></td>
+		<td><% $_->{PlayerName} %></td>
 		<td><% $_->{BanTypeName} %></td>
 		<td><% $_->{BanReason} %></td>
+		<td><% $_->{OperatorName} %></td>
 		<td <% ($_->{BanPermanent} ? 'PermaBan' : '') %>><% ($_->{BanPermanent} ? 'PermaBan' : $_->{BanExpire}) %></td>
-		<td><button class="UnBan">DELETE</button></td>
+		<td><button class="deleteBan">DELETE</button></td>
 	</tr>
 % }
 </table>
@@ -16,6 +18,24 @@
 $(function(){
 	$('.OpenBanDialog').click(function(){
 		$BanAddDialog.dialog('open');
+	});
+	$('table.table').on('click', 'button.deleteBan', function(event) {
+		var $button = $(event.currentTarget);
+		var $row = $button.parents('tr:first');
+
+		$.ajax({
+			type: 'POST',
+			url: '/ban/delete.html',
+			dataType: 'json',
+			data: {
+				BanId: $row.attr('BanId')
+			},
+			success: function(data) {
+				if (data.success) {
+					$row.remove();
+				}
+			}
+		});
 	});
 });
 </script>
