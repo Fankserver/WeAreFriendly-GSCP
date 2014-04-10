@@ -21,8 +21,8 @@ sub addBan {
 		(defined($args->{AccountId}) && $args->{AccountId} =~ /^(\d+)$/ && $1 > 0)
 		&& (defined($args->{BanTypeId}) && $args->{BanTypeId} =~ /^(\d+)$/ && $1 > 0)
 		&& (
-			(defined($args->{Expire}) && $args->{Expire} =~ s/^(\d{2})\.(\d{2})\.(\d{4})$/$3-$2-$1/)
-			|| (defined($args->{Permanent}) && $args->{Permanent} =~ /^1$/)
+			(defined($args->{Permanent}) && $args->{Permanent})
+			|| (defined($args->{Expire}) && $args->{Expire} =~ s/^(\d{2})\.(\d{2})\.(\d{4})$/$3-$2-$1/)
 		)
 		&& (defined($args->{Reason}) && $args->{Reason})
 		&& (defined($args->{OperatorId}) && $args->{OperatorId})
@@ -40,9 +40,9 @@ sub addBan {
 			VALUES (
 				?
 				,?
-				,~.($args->{Permanent} ? 1 : 0).q~
+				,~.(defined($args->{Permanent}) && $args->{Permanent} ? 1 : 0).q~
 				,?
-				,~.($args->{Permanent} ? 'NULL' : $args->{Expire}).q~
+				,~.(defined($args->{Permanent}) && $args->{Permanent} ? 'NULL' : "'".$args->{Expire}."'").q~
 				,(SELECT id FROM steam.account WHERE i_steamid = ? LIMIT 1)
 				,NOW()
 			);
